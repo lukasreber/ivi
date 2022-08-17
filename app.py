@@ -29,19 +29,19 @@ app.layout = html.Div(children=[
             className='font-bold my-2 text-3xl underline decoration-yellow-400 decoration-dotted text-gray-700'),
 
     html.Div(
-        children='An interactive visualisation of New York City Taxi Trips in the year 2011', className='mb-10 text-gray-900'),
+        children='An interactive visualisation of New York City Taxi Trips in the year 2021', className='mb-10 text-gray-900'),
 
 
     html.Div([
         dcc.Graph(id='create_map'),
         dcc.Graph(id='topzones', className='lg:mt-0 mt-10'),
-    ], className='lg:flex justify-center'),
+    ], className='lg:flex justify-center bg-gray-100 pt-10'),
 
 
 
     html.Div(children=[
         html.H3(children='Select Months', className='font-bold'),
-        dcc.RangeSlider(1, 11, 1, count=1, value=[
+        dcc.RangeSlider(1, 12, 1, count=1, value=[
                         1, 12], className='my-2', id='select_months'),
         html.H3(children='Pickup or Dropoff', className='font-bold'),
         dcc.RadioItems([
@@ -51,7 +51,7 @@ app.layout = html.Div(children=[
 
 
 
-    ], className='mt-10 p-2 bg-gray-100'),
+    ], className='pt-10 p-2 bg-gray-100'),
 
     html.H1(children='Details',
             className='font-bold text-xl text-gray-700 mt-10 p-2'),
@@ -128,7 +128,8 @@ def create_map(pudo, timerange):
                                        'count': 'Counts'},
                                hover_data=['Borough', 'Zone']
                                )
-    fig.update_layout(margin={"r": 0, "t": 0, "l": 0, "b": 0})
+    fig.update_layout({'paper_bgcolor': 'rgb(243,244,246)', 'font_family': 'ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial'},
+                      margin={"r": 0, "t": 0, "l": 0, "b": 0})
 
     return fig
 
@@ -144,8 +145,8 @@ def create_topzones(pudo, timerange):
     trips = prepare_data(pudo, timerange)
 
     fig = px.bar(trips.sort_values('count', ascending=False).head(
-        50), x='Zone', y='count', title='Top 50 Zones', labels={'count': '', 'Zone': ''}, color_discrete_sequence=['rgb(250,204,21)']*len(trips))
-    fig.update_layout({'plot_bgcolor': 'rgb(255,255,255)'},
+        50), x='Zone', y='count', title=f'Top 50 {pudo} Zones', labels={'count': '', 'Zone': ''}, color_discrete_sequence=['rgb(250,204,21)']*len(trips))
+    fig.update_layout({'paper_bgcolor': 'rgb(243,244,246)', 'plot_bgcolor': 'rgb(243,244,246)', 'font_family': 'ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial'},
                       margin={"r": 40, "t": 40, "l": 40, "b": 0})
 
     return fig
@@ -161,6 +162,8 @@ def create_topzones(pudo, timerange):
 def create_detail_plot(n_samples, x_axis, y_axis):
     fig = px.scatter(nyc_taxi.sample(n_samples),
                      x=x_axis, y=y_axis, title=f'{x_axis} vs. {y_axis} on {n_samples} samples')
+    fig.update_layout({'font_family': 'ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial'},
+                      margin={"r": 0, "t": 40, "l": 0, "b": 0})
 
     return fig
 
