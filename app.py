@@ -11,7 +11,7 @@ with open("data/taxi_zones/taxi_zones.geojson") as geofile:
 
 
 external_script = ['https://cdn.tailwindcss.com']
-#custom_css = ["/assets/styles.css"]
+# custom_css = ["/assets/styles.css"]
 
 
 app = Dash(__name__, external_scripts=external_script)
@@ -54,25 +54,58 @@ app.layout = html.Div(children=[
     ], className='pt-10 p-2 bg-gray-100'),
 
     html.H1(children='Details',
-            className='font-bold text-xl text-gray-700 mt-10 p-2'),
+            className='font-bold text-xl text-gray-700 py-10 pl-2 bg-yellow-200'),
 
     html.Div([
         html.Div([
             html.H3('Number of Samples'),
             dcc.Slider(1000, 100000, value=1000, id='n_samples',
-                       className='my-4 w-3/4'),
+                       className='py-4 w-3/4'),
             html.H3('X-Axis Values'),
             dcc.Dropdown(['passenger_count', 'trip_distance',
                          'fare_amount', 'tip_amount'], value='passenger_count', id='x_axis', className='my-4 w-3/4 font-normal'),
             html.H3('Y-Axis Values'),
             dcc.Dropdown(['passenger_count', 'trip_distance',
                          'fare_amount', 'tip_amount'], value='trip_distance', id='y_axis', className='my-4 w-3/4 font-normal'),
-        ], className='w-full font-bold'),
+        ], className='w-full font-bold bg-yellow-200 pl-2'),
         html.Div([
-            dcc.Graph(id='detailplot')
-        ], className='w-full')
+            dcc.Graph(id='detailplot', className='w-3/4 pb-10')
+        ], className='w-full bg-yellow-200')
 
-    ], className='lg:flex mt-5 p-2'),
+    ], className='lg:flex'),
+
+
+    html.H1(children='Filters',
+            className='font-bold text-xl text-gray-700 py-10 pl-2 bg-gray-100'),
+
+    html.Div([
+
+        html.Div([
+            html.H3('Payment Type'),
+            dcc.Dropdown(options=[
+                {'label': 'Credit card', 'value': 1},
+                {'label': 'Cash', 'value': 2},
+                {'label': 'No charge', 'value': 3},
+                {'label': 'Dispute', 'value': 4},
+                {'label': 'Unknown', 'value': 5},
+            ], id='payment_type', className='my-4 w-3/4 font-normal'),
+            dcc.Graph(id='payment_type_plot', className='w-3/4')
+        ], className='w-full font-bold pl-2'),
+
+        html.Div([
+            html.H3('Rate Code'),
+            dcc.Dropdown(options=[
+                {'label': 'Standard rate', 'value': 1},
+                {'label': 'JFK', 'value': 2},
+                {'label': 'Newark', 'value': 3},
+                {'label': 'Nassau or Westchester', 'value': 4},
+                {'label': 'Negotiated fare', 'value': 5},
+                {'label': 'Group ride', 'value': 6},
+            ], id='rate_code', className='my-4 w-3/4 font-normal'),
+            dcc.Graph(id='rate_code_plot', className='w-3/4')
+        ], className='w-full font-bold pl-2 pb-10')
+
+    ], className='lg:flex bg-gray-100'),
 
     html.Div([
 
@@ -162,7 +195,54 @@ def create_topzones(pudo, timerange):
 def create_detail_plot(n_samples, x_axis, y_axis):
     fig = px.scatter(nyc_taxi.sample(n_samples),
                      x=x_axis, y=y_axis, title=f'{x_axis} vs. {y_axis} on {n_samples} samples')
-    fig.update_layout({'font_family': 'ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial'},
+    fig.update_layout({'paper_bgcolor': 'rgb(254,240,138)', 'font_family': 'ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial'},
+                      margin={"r": 0, "t": 30, "l": 0, "b": 0})
+
+    return fig
+
+
+# payment type plot
+@ app.callback(
+    Output('payment_type_plot', 'figure'),
+    Input('payment_type', 'value')
+
+
+)
+def create_payment_plot(payment_type):
+
+    if payment_type == None:
+        nyc_taxi_filtered = nyc_taxi
+    else:
+        nyc_taxi_filtered = nyc_taxi[nyc_taxi.payment_type == payment_type]
+
+    group_by_month = nyc_taxi_filtered.groupby(
+        nyc_taxi_filtered.tpep_pickup_datetime.dt.month).size()
+    fig = px.bar(x=group_by_month.index, y=group_by_month,
+                 labels={'x': 'Month', 'y': 'No. of trips'})
+    fig.update_layout({'paper_bgcolor': 'rgb(243,244,246)', 'plot_bgcolor': 'rgb(243,244,246)', 'font_family': 'ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial'},
+                      margin={"r": 0, "t": 40, "l": 0, "b": 0})
+
+    return fig
+
+# rate code plot
+
+
+@ app.callback(
+    Output('rate_code_plot', 'figure'),
+    Input('rate_code', 'value')
+)
+def create_rate_plot(rate_code):
+
+    if rate_code == None:
+        nyc_taxi_filtered = nyc_taxi
+    else:
+        nyc_taxi_filtered = nyc_taxi[nyc_taxi.RatecodeID == rate_code]
+
+    group_by_month = nyc_taxi_filtered.groupby(
+        nyc_taxi_filtered.tpep_pickup_datetime.dt.month).size()
+    fig = px.bar(x=group_by_month.index, y=group_by_month,
+                 labels={'x': 'Month', 'y': 'No. of trips'})
+    fig.update_layout({'paper_bgcolor': 'rgb(243,244,246)', 'plot_bgcolor': 'rgb(243,244,246)', 'font_family': 'ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial'},
                       margin={"r": 0, "t": 40, "l": 0, "b": 0})
 
     return fig
